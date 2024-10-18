@@ -62,12 +62,14 @@
       </div>
     </div>
 
-    <!--Resultado JSON-->
+    <!--Diagrama-->
     <div id="sample" class="py-3">
       <div
         id="myDiagramDiv"
-        style="border: solid 1px black; width: 100%; height: 300px"
+        style="border: solid 1px black; width: 100%; height: 50rem"
       ></div>
+
+      <!--Resultado JSON-->
       <div class="py-4">
         Modelo de diagrama salvo em formato JSON, atualizado automaticamente
         após cada alteração, desfazer ou refazer:
@@ -86,6 +88,11 @@
     <!--Diagrama-->
     <script id="code">
       let myDiagram;
+      let figureIndex = 0;
+      const figures = ["rectangle", "diamond", "ellipse", "triangle"];
+      const diagramModelName = "diagramModel";
+      const dropdownTableName = "Ações";
+      const savedModel = localStorage.getItem(diagramModelName);
 
       function init() {
         myDiagram = new go.Diagram("myDiagramDiv", {
@@ -93,17 +100,34 @@
           "undoManager.isEnabled": true,
           "linkingTool.isEnabled": true,
           "relinkingTool.isEnabled": true,
+          "animationManager.isEnabled": true,
+          "clickCreatingTool.archetypeNodeData": { text: "Node" },
           ModelChanged: (e) => {
             if (e.isTransactionFinished) showModel();
           },
         });
 
+        // design da tabela
         const fieldTemplate = new go.Panel("TableRow", {
           background: "transparent",
           fromSpot: go.Spot.Right,
           toSpot: go.Spot.Left,
           fromLinkable: true,
           toLinkable: true,
+          toLinkableDuplicates: true,
+          shadowVisible: true,
+          click: (e, item) => {
+            const node = item.part;
+            if (node !== null) {
+              myDiagram.model.addArrayItem(node.data.fields, {
+                name: "Nova linha",
+                info: "hello world",
+                color: "#FFFFFF",
+                figure: getNextFigure(),
+                editable: true,
+              });
+            }
+          },
         })
           .bind("portId", "name")
           .add(
@@ -182,7 +206,6 @@
           new go.Shape({ toArrow: "Standard", stroke: null })
         );
 
-        const savedModel = localStorage.getItem("diagramModel");
         myDiagram.model = savedModel
           ? go.Model.fromJson(savedModel)
           : new go.GraphLinksModel({
@@ -203,9 +226,6 @@
         if (window.Prism) window.Prism.highlightAll();
         return modelJson;
       }
-
-      const figures = ["rectangle", "diamond", "ellipse", "triangle"];
-      let figureIndex = 0;
 
       function getNextFigure() {
         const figure = figures[figureIndex];
@@ -243,7 +263,6 @@
       document
         .getElementById("createDropdownTable")
         .addEventListener("click", () => {
-          const dropdownTableName = "Ações";
           myDiagram.model.addNodeData({
             key: dropdownTableName,
             fields: [],
