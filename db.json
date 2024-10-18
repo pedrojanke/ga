@@ -1,0 +1,96 @@
+{
+    "class": "GraphLinksModel",
+    "copiesArrays": true,
+    "copiesArrayObjects": true,
+    "linkFromPortIdProperty": "fromPort",
+    "linkToPortIdProperty": "toPort",
+    "nodeDataArray": [
+        {
+            "key": "Lucros",
+            "fields": [
+                {
+                    "name": "10",
+                    "info": "",
+                    "color": "#FFFFFF",
+                    "figure": "rectangle"
+                }, {
+                    "name": "20",
+                    "info": "",
+                    "color": "#FFFFFF",
+                    "figure": "diamond"
+                }, {
+                    "name": "30",
+                    "info": "",
+                    "color": "#FFFFFF",
+                    "figure": "ellipse"
+                }
+            ],
+            "loc": "-179.0001220703125 -50.99989318847656"
+        }, {
+            "key": "Pesos",
+            "fields": [
+                {
+                    "name": "5",
+                    "info": "",
+                    "color": "#FFFFFF",
+                    "figure": "triangle"
+                }, {
+                    "name": "10",
+                    "info": "",
+                    "color": "#FFFFFF",
+                    "figure": "rectangle"
+                }, {
+                    "name": "15",
+                    "info": "",
+                    "color": "#FFFFFF",
+                    "figure": "diamond"
+                }
+            ],
+            "loc": "50 -51.00001525878906"
+        }, {
+            "key": "Capacidade",
+            "fields": [
+                {
+                    "name": "20",
+                    "info": "",
+                    "color": "#FFFFFF",
+                    "figure": "ellipse"
+                }
+            ],
+            "loc": "256.00006103515625 -29.00006103515625"
+        }
+    ],
+    "linkDataArray": [
+        {
+            "from": "Lucros",
+            "to": "Pesos",
+            "fromPort": "10",
+            "toPort": "5"
+        }, {
+            "from": "Lucros",
+            "to": "Pesos",
+            "fromPort": "20",
+            "toPort": "10"
+        }, {
+            "from": "Lucros",
+            "to": "Pesos",
+            "fromPort": "30",
+            "toPort": "15"
+        }, {
+            "from": "Pesos",
+            "to": "Capacidade",
+            "fromPort": "5",
+            "toPort": "20"
+        }, {
+            "from": "Pesos",
+            "to": "Capacidade",
+            "fromPort": "10",
+            "toPort": "20"
+        }, {
+            "from": "Pesos",
+            "to": "Capacidade",
+            "fromPort": "15",
+            "toPort": "20"
+        }
+    ]
+}

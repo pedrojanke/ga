@@ -1,0 +1,142 @@
+function init() {
+    myDiagram = new go.Diagram('myDiagramDiv', {
+      validCycle: go.CycleMode.NotDirected, // don't allow loops
+      ModelChanged: (e) => {
+        if (e.isTransactionFinished) showModel();
+      },
+      'undoManager.isEnabled': true
+    });
+  
+    // Lista de figuras possíveis
+    const figureList = ['Ellipse', 'Diamond', 'Rectangle', 'Triangle', 'Hexagon'];
+  
+    // Template para cada linha
+    var fieldTemplate = new go.Panel('TableRow', {
+      background: 'transparent', 
+      fromSpot: go.Spot.Right, 
+      toSpot: go.Spot.Left,
+      fromLinkable: true,
+      toLinkable: true
+    })
+      .bind('portId', 'name') 
+      .add(
+        new go.Shape({
+          width: 12,
+          height: 12,
+          column: 0,
+          strokeWidth: 2,
+          margin: 4,
+          fromLinkable: false,
+          toLinkable: false
+        })
+        .bind('figure', 'figure') 
+        .bind('fill', 'color'),
+        new go.TextBlock({
+          margin: new go.Margin(0, 5),
+          column: 1,
+          font: 'bold 13px sans-serif',
+          alignment: go.Spot.Left,
+          fromLinkable: false,
+          toLinkable: false
+        }).bind('text', 'name'),
+        new go.TextBlock({
+          margin: new go.Margin(0, 5),
+          column: 2,
+          font: '13px sans-serif',
+          alignment: go.Spot.Left
+        }).bind('text', 'info')
+      );
+  
+    // Template para o nó inteiro
+    myDiagram.nodeTemplate = new go.Node('Auto', {
+      copyable: false,
+      deletable: false
+    })
+      .bindTwoWay('location', 'loc', go.Point.parse, go.Point.stringify)
+      .add(
+        new go.Shape({ fill: '#EEEEEE' }),
+        new go.Panel('Vertical')
+          .add(
+            new go.Panel('Auto', { stretch: go.Stretch.Horizontal })
+              .add(
+                new go.Shape({ fill: '#1570A6', stroke: null }),
+                new go.TextBlock({
+                  alignment: go.Spot.Center,
+                  margin: 3,
+                  stroke: 'white',
+                  textAlign: 'center',
+                  font: 'bold 12pt sans-serif'
+                }).bind('text', 'key')
+              ),
+            new go.Panel('Table', {
+              padding: 2,
+              minSize: new go.Size(100, 10),
+              defaultStretch: go.Stretch.Horizontal,
+              itemTemplate: fieldTemplate
+            }).bind('itemArray', 'fields')
+          )
+      );
+  
+    // Modelo de links
+    myDiagram.linkTemplate = new go.Link({
+      relinkableFrom: true,
+      relinkableTo: true, 
+      toShortLength: 4,
+      fromShortLength: 2
+    })
+      .add(
+        new go.Shape({ strokeWidth: 1.5 }),
+        new go.Shape({ toArrow: 'Standard', stroke: null })
+      );
+  
+    // Função para atribuir figuras diferentes a cada linha
+    function assignFigures(fields) {
+      return fields.map((field, index) => ({
+        ...field,
+        figure: figureList[index % figureList.length] // Atribui a figura ciclicamente
+      }));
+    }
+  
+    // Modelo de dados com figuras atribuídas
+    myDiagram.model = new go.GraphLinksModel({
+      copiesArrays: true,
+      copiesArrayObjects: true,
+      linkFromPortIdProperty: 'fromPort',
+      linkToPortIdProperty: 'toPort',
+      nodeDataArray: [
+        {
+          key: 'Record1',
+          fields: assignFigures([
+            { name: 'field1', info: '', color: '#F7B84B' },
+            { name: 'field2', info: 'the second one', color: '#F25022' },
+            { name: 'fieldThree', info: '3rd', color: '#00BCF2' }
+          ]),
+          loc: '0 0'
+        },
+        {
+          key: 'Record2',
+          fields: assignFigures([
+            { name: 'fieldA', info: '', color: '#FFB900' },
+            { name: 'fieldB', info: '', color: '#F25022' },
+            { name: 'fieldC', info: '', color: '#7FBA00' },
+            { name: 'fieldD', info: 'fourth', color: '#00BCF2' }
+          ]),
+          loc: '280 0'
+        }
+      ],
+      linkDataArray: [
+        { from: 'Record1', fromPort: 'field1', to: 'Record2', toPort: 'fieldA' },
+        { from: 'Record1', fromPort: 'field2', to: 'Record2', toPort: 'fieldD' },
+        { from: 'Record1', fromPort: 'fieldThree', to: 'Record2', toPort: 'fieldB' }
+      ]
+    });
+  
+    showModel(); 
+  
+    function showModel() {
+      document.getElementById('mySavedModel').innerHTML = myDiagram.model.toJson();
+      if (window.Prism) window.Prism.highlightAll();
+    }
+  }
+  window.addEventListener('DOMContentLoaded', init);
+  

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Dropdown</title>
+    <script src="https://unpkg.com/gojs@3.0.12/release/go.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+</head>
+<body>
+    <p>
+        Documentacao
+        <a href="https://gojs.net/latest/samples/records.html">records.html</a>.
+    </p>
+
+    <button id="botao">Enviar</button>
+
+    <div id="controls">
+        <input type="text" id="tableName" placeholder="New Table Name" />
+        <button id="createTable">Create Table</button>
+        <input type="text" id="rowName" placeholder="New Row Name" />
+        <button id="addRow">Add Row</button>
+        <button id="saveModel">Save Model</button>
+        <button id="createDropdownTable">Create Dropdown Table</button>
+    </div>
+
+    <div id="sample">
+        <div id="myDiagramDiv" style="border: solid 1px black; width: 100%; height: 300px"></div>
+        <div>
+            Diagram Model saved in JSON format, automatically updated after each change or undo or redo:
+            <pre class="lang-js"><code id="mySavedModel" style="width: 100%; height: 250px"></code></pre>
+        </div>
+    </div>
+
+    <script id="code">
+        let myDiagram;
+
+        function init() {
+            myDiagram = new go.Diagram('myDiagramDiv', {
+                validCycle: go.CycleMode.All,
+                'undoManager.isEnabled': true,
+                "linkingTool.isEnabled": true,
+                "relinkingTool.isEnabled": true,
+                ModelChanged: (e) => {
+                    if (e.isTransactionFinished) showModel();
+                }
+            });
+
+            const fieldTemplate = new go.Panel('TableRow', {
+                background: 'transparent',
+                fromSpot: go.Spot.Right,
+                toSpot: go.Spot.Left,
+                fromLinkable: true,
+                toLinkable: true,
+            })
+                .bind('portId', 'name')
+                .add(
+                    new go.Shape({
+                        width: 12,
+                        height: 12,
+                        column: 0,
+                        strokeWidth: 2,
+                        margin: 4,
+                        fromLinkable: true,
+                        toLinkable: true
+                    })
+                        .bind('figure', 'figure')
+                        .bind('fill', 'color'),
+                    new go.TextBlock({
+                        margin: new go.Margin(0, 5),
+                        column: 1,
+                        font: 'bold 13px sans-serif',
+                        alignment: go.Spot.Left,
+                        fromLinkable: true,
+                        toLinkable: true,
+                        editable: true
+                    }).bind('text', 'name'),
+                    new go.TextBlock({
+                        margin: new go.Margin(0, 5),
+                        column: 2,
+                        font: '13px sans-serif',
+                        alignment: go.Spot.Left,
+                        editable: true
+                    }).bind('text', 'info')
+                );
+
+            myDiagram.nodeTemplate = new go.Node('Auto', {
+                copyable: true,
+                deletable: true,
+                fromLinkable: false,
+                toLinkable: false
+            })
+                .bindTwoWay('location', 'loc', go.Point.parse, go.Point.stringify)
+                .add(
+                    new go.Shape({ fill: '#EEEEEE' }),
+                    new go.Panel('Vertical')
+                        .add(
+                            new go.Panel('Auto', { stretch: go.Stretch.Horizontal })
+                                .add(
+                                    new go.Shape({ 
+                                        fill: '#1570A6', 
+                                        stroke: null,
+                                        fromLinkable: false,
+                                        toLinkable: false
+                                    }),
+                                    new go.TextBlock({
+                                        alignment: go.Spot.Center,
+                                        margin: 3,
+                                        stroke: 'white',
+                                        textAlign: 'center',
+                                        font: 'bold 12pt sans-serif',
+                                    }).bind('text', 'key')
+                                ),
+                            new go.Panel('Table', {
+                                padding: 2,
+                                minSize: new go.Size(100, 10),
+                                defaultStretch: go.Stretch.Horizontal,
+                                itemTemplate: fieldTemplate
+                            }).bind('itemArray', 'fields')
+                        )
+                );
+
+            myDiagram.linkTemplate = new go.Link({
+                routing: go.Link.AvoidsNodes,
+                curve: go.Link.JumpOver,
+                relinkableFrom: true,
+                relinkableTo: true,
+                toShortLength: 4,
+                fromShortLength: 2
+            })
+                .add(
+                    new go.Shape({ strokeWidth: 1.5 }),
+                    new go.Shape({ toArrow: 'Standard', stroke: null })
+                );
+
+            const savedModel = localStorage.getItem('diagramModel');
+            myDiagram.model = savedModel ? go.Model.fromJson(savedModel) : new go.GraphLinksModel({
+                copiesArrays: true,
+                copiesArrayObjects: true,
+                linkFromPortIdProperty: 'fromPort',
+                linkToPortIdProperty: 'toPort',
+                nodeDataArray: [],
+                linkDataArray: []
+            });
+
+            showModel();
+        }
+
+        function showModel() {
+            const modelJson = myDiagram.model.toJson();
+            document.getElementById('mySavedModel').innerHTML = modelJson;
+            if (window.Prism) window.Prism.highlightAll();
+            return modelJson;
+        }
+
+        const figures = ['rectangle', 'diamond', 'ellipse', 'triangle'];
+        let figureIndex = 0;
+
+        function getNextFigure() {
+            const figure = figures[figureIndex];
+            figureIndex = (figureIndex + 1) % figures.length;
+            return figure;
+        }
+
+        document.getElementById('createTable').addEventListener('click', () => {
+            const tableName = document.getElementById('tableName').value;
+            if (tableName) {
+                myDiagram.model.addNodeData({ key: tableName, fields: [], loc: '0 0' });
+                document.getElementById('tableName').value = '';
+            }
+        });
+
+        document.getElementById('addRow').addEventListener('click', () => {
+            const rowName = document.getElementById('rowName').value;
+            const selectedNode = myDiagram.selection.first();
+            if (rowName && selectedNode) {
+                myDiagram.model.addArrayItem(selectedNode.data.fields, { name: rowName, info: '', color: '#FFFFFF', figure: getNextFigure(), editable: true});
+                document.getElementById('rowName').value = '';
+            }
+        });
+
+        document.getElementById('createDropdownTable').addEventListener('click', () => {
+            const dropdownTableName = "Ações";
+            myDiagram.model.addNodeData({
+                key: dropdownTableName,
+                fields: [],
+                loc: '0 0' 
+            });
+
+            const dropdownNode = myDiagram.model.findNodeDataForKey(dropdownTableName);
+            if (dropdownNode) {
+                myDiagram.model.addArrayItem(dropdownNode.fields, { name: "Subtração", info: "", color: "#FFFFFF", figure: "rectangle" });
+                myDiagram.model.addArrayItem(dropdownNode.fields, { name: "Divisão", info: "", color: "#FFFFFF", figure: "diamond" });
+                myDiagram.model.addArrayItem(dropdownNode.fields, { name: "Multiplicação", info: "", color: "#FFFFFF", figure: "ellipse" });
+                myDiagram.model.addArrayItem(dropdownNode.fields, { name: "Soma", info: "", color: "#FFFFFF", figure: "triangle" });
+            }
+        });
+
+        document.getElementById('saveModel').addEventListener('click', () => {
+            localStorage.setItem('diagramModel', myDiagram.model.toJson());
+            alert('Model saved to localStorage!');
+        });
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+    
+    <script src="/enviar-python.js"></script>
+</body>
+</html>
