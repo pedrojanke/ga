@@ -103,7 +103,10 @@
           "animationManager.isEnabled": true,
           "clickCreatingTool.archetypeNodeData": { text: "Node" },
           ModelChanged: (e) => {
-            if (e.isTransactionFinished) showModel();
+            if (e.isTransactionFinished) {
+              showModel();
+              localStorage.setItem("diagramModel", myDiagram.model.toJson()); //cada mudança faz o salvamento; e salvamento das linhas das tabelas é na linha 154 do code
+            }
           },
         });
 
@@ -147,10 +150,8 @@
               column: 1,
               font: "bold 13px sans-serif",
               alignment: go.Spot.Left,
-              fromLinkable: true,
-              toLinkable: true,
               editable: true,
-            }).bind("text", "name"),
+            }).bind(new go.Binding("text", "name").makeTwoWay()),
             new go.TextBlock({
               margin: new go.Margin(0, 5),
               column: 2,
@@ -251,62 +252,21 @@
         if (rowName && selectedNode) {
           myDiagram.model.addArrayItem(selectedNode.data.fields, {
             name: rowName,
-            info: "",
+            info: "Informação da linha",
             color: "#FFFFFF",
             figure: getNextFigure(),
-            editable: true,
           });
           document.getElementById("rowName").value = "";
         }
       });
 
-      document
-        .getElementById("createDropdownTable")
-        .addEventListener("click", () => {
-          myDiagram.model.addNodeData({
-            key: dropdownTableName,
-            fields: [],
-            loc: "0 0",
-          });
-
-          const dropdownNode =
-            myDiagram.model.findNodeDataForKey(dropdownTableName);
-          if (dropdownNode) {
-            myDiagram.model.addArrayItem(dropdownNode.fields, {
-              name: "Subtração",
-              info: "",
-              color: "#FFFFFF",
-              figure: "rectangle",
-            });
-            myDiagram.model.addArrayItem(dropdownNode.fields, {
-              name: "Divisão",
-              info: "",
-              color: "#FFFFFF",
-              figure: "diamond",
-            });
-            myDiagram.model.addArrayItem(dropdownNode.fields, {
-              name: "Multiplicação",
-              info: "",
-              color: "#FFFFFF",
-              figure: "ellipse",
-            });
-            myDiagram.model.addArrayItem(dropdownNode.fields, {
-              name: "Soma",
-              info: "",
-              color: "#FFFFFF",
-              figure: "triangle",
-            });
-          }
-        });
-
       document.getElementById("saveModel").addEventListener("click", () => {
-        localStorage.setItem("diagramModel", myDiagram.model.toJson());
-        alert("Modelo salvo no navegador!");
+        const modelJson = showModel();
+        localStorage.setItem(diagramModelName, modelJson);
+        alert("Modelo salvo com sucesso!");
       });
 
-      window.addEventListener("DOMContentLoaded", init);
+      init();
     </script>
-
-    <script src="/enviar-python.js"></script>
   </body>
 </html>
