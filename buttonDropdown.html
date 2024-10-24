@@ -60,6 +60,12 @@
           Criar tabela de seleção
         </button>
       </div>
+
+      <div class="form-group mb-0">
+        <button id="createRestritionTable" class="btn btn-secondary">
+          Criar tabela de retrições
+        </button>
+      </div>
     </div>
 
     <!--Diagrama-->
@@ -92,6 +98,7 @@
       const figures = ["rectangle", "diamond", "ellipse", "triangle"];
       const diagramModelName = "diagramModel";
       const dropdownTableName = "Ações";
+      const dropRestritionTableName = "Restrições";
       const savedModel = localStorage.getItem(diagramModelName);
 
       function init() {
@@ -160,6 +167,70 @@
               editable: true,
             }).bind("text", "info")
           );
+
+          document
+        .getElementById("createRestritionTable")
+        .addEventListener("click", () => {
+          myDiagram.model.addNodeData({
+            key: dropRestritionTableName,
+            fields: [],
+            loc: "0 0",
+          });
+          const dropdownNode =
+            myDiagram.model.findNodeDataForKey(dropRestritionTableName);
+          if (dropdownNode) {
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "==",
+              info: "",
+              color: "#FFFFFF",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "===",
+              info: "",
+              color: "#FFFFFF",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "!=",
+              info: "",
+              color: "#FFFFFF",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "!==",
+              info: "",
+              color: "#FFFFFF",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "<",
+              info: "",
+              color: "#FFFFFF",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "<=",
+              info: "",
+              color: "#FFFFFF",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: ">",
+              info: "",
+              color: "#FFFFFF",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: ">=",
+              info: "",
+              color: "#FFFFFF",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "&&",
+              info: "",
+              color: "#FFFFFF",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "||",
+              info: "",
+              color: "#FFFFFF",
+            });
+          }
+        });
 
         myDiagram.nodeTemplate = new go.Node("Auto", {
           copyable: true,
@@ -259,6 +330,47 @@
           document.getElementById("rowName").value = "";
         }
       });
+
+      document
+        .getElementById("createDropdownTable")
+        .addEventListener("click", () => {
+          myDiagram.model.addNodeData({
+            key: dropdownTableName,
+            fields: [],
+            loc: "0 0",
+          });
+
+          const dropdownNode =
+            myDiagram.model.findNodeDataForKey(dropdownTableName);
+          if (dropdownNode) {
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "Subtração",
+              info: "",
+              color: "#FFFFFF",
+              figure: "rectangle",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "Divisão",
+              info: "",
+              color: "#FFFFFF",
+              figure: "diamond",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "Multiplicação",
+              info: "",
+              color: "#FFFFFF",
+              figure: "ellipse",
+            });
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: "Soma",
+              info: "",
+              color: "#FFFFFF",
+              figure: "triangle",
+            });
+          }
+        });
+
+        
 
       document.getElementById("saveModel").addEventListener("click", () => {
         const modelJson = showModel();
