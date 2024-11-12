@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Button Dropdown</title>
+    <script src="https://unpkg.com/gojs@3.0.12/release/go.js"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  </head>
+  <body>
+    <p>
+      Documentação
+      <a href="https://gojs.net/latest/samples/records.html">records.html</a>.
+    </p>
+
+    <button id="botao" class="btn btn-primary">Enviar</button>
+    <div id="controls" class="d-flex flex-wrap gap-2 align-items-center">
+      <div class="form-group mb-0">
+        <input
+          type="text"
+          id="tableName"
+          placeholder="Nome da tabela"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group mb-0">
+        <button id="createTable" class="btn btn-primary">Criar tabela</button>
+      </div>
+
+      <div class="form-group mb-0">
+        <input
+          type="text"
+          id="rowName"
+          placeholder="Nome da linha"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group mb-0">
+        <button id="addRow" class="btn btn-primary">Adicionar linha</button>
+      </div>
+
+      <div class="form-group mb-0">
+        <button id="saveModel" class="btn btn-success">Salvar</button>
+      </div>
+
+      <div class="form-group mb-0">
+        <button id="createDropdownTable" class="btn btn-secondary">
+          Criar tabela de cidades
+        </button>
+      </div>
+    </div>
+
+    <!--Diagrama-->
+    <div id="sample" class="py-3">
+      <div
+        id="myDiagramDiv"
+        style="border: solid 1px black; width: 100%; height: 50rem"
+      ></div>
+
+      <!--Resultado JSON-->
+      <div class="py-4">
+        Modelo de diagrama salvo em formato JSON, atualizado automaticamente
+        após cada alteração, desfazer ou refazer:
+        <pre
+          class="lang-js"
+        ><code id="mySavedModel" style="width: 100%; height: 250px"></code></pre>
+      </div>
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+
+    <!--Diagrama-->
+    <script id="code">
+      let myDiagram;
+      let figureIndex = 0;
+      const figures = ["rectangle", "diamond", "ellipse", "triangle"];
+      const diagramModelName = "diagramModel";
+      const dropdownTableName = "Cidades";
+      const savedModel = localStorage.getItem(diagramModelName);
+
+      function init() {
+        myDiagram = new go.Diagram("myDiagramDiv", {
+          validCycle: go.CycleMode.All,
+          "undoManager.isEnabled": true,
+          "linkingTool.isEnabled": true,
+          "relinkingTool.isEnabled": true,
+          "animationManager.isEnabled": true,
+          "clickCreatingTool.archetypeNodeData": { text: "Node" },
+          ModelChanged: (e) => {
+            if (e.isTransactionFinished) {
+              showModel();
+              localStorage.setItem("diagramModel", myDiagram.model.toJson());
+            }
+          },
+        });
+
+        const fieldTemplate = new go.Panel("TableRow", {
+          background: "transparent",
+          fromSpot: go.Spot.Right,
+          toSpot: go.Spot.Left,
+          fromLinkable: true,
+          toLinkable: true,
+          toLinkableDuplicates: true,
+          shadowVisible: true,
+          click: (e, item) => toggleSelection(item),
+        })
+          .bind("portId", "name")
+          .add(
+            new go.Shape({
+              width: 12,
+              height: 12,
+              column: 0,
+              strokeWidth: 2,
+              margin: 4,
+              fromLinkable: true,
+              toLinkable: true,
+            })
+              .bind("figure", "figure")
+              .bind("fill", "color"),
+            new go.TextBlock({
+              margin: new go.Margin(0, 5),
+              column: 1,
+              font: "bold 13px sans-serif",
+              alignment: go.Spot.Left,
+              editable: true,
+            }).bind(new go.Binding("text", "name").makeTwoWay()),
+            new go.TextBlock({
+              margin: new go.Margin(0, 5),
+              column: 2,
+              font: "13px sans-serif",
+              alignment: go.Spot.Left,
+              editable: true,
+            }).bind("text", "info")
+          );
+
+        myDiagram.nodeTemplate = new go.Node("Auto", {
+          copyable: true,
+          deletable: true,
+          fromLinkable: false,
+          toLinkable: false,
+        })
+          .bindTwoWay("location", "loc", go.Point.parse, go.Point.stringify)
+          .add(
+            new go.Shape({ fill: "#EEEEEE" }),
+            new go.Panel("Vertical").add(
+              new go.Panel("Auto", { stretch: go.Stretch.Horizontal }).add(
+                new go.Shape({
+                  fill: "#1570A6",
+                  stroke: null,
+                  fromLinkable: false,
+                  toLinkable: false,
+                }),
+                new go.TextBlock({
+                  alignment: go.Spot.Center,
+                  margin: 3,
+                  stroke: "white",
+                  textAlign: "center",
+                  font: "bold 12pt sans-serif",
+                }).bind("text", "key")
+              ),
+              new go.Panel("Table", {
+                padding: 2,
+                minSize: new go.Size(100, 10),
+                defaultStretch: go.Stretch.Horizontal,
+                itemTemplate: fieldTemplate,
+              }).bind("itemArray", "fields")
+            )
+          );
+
+        myDiagram.linkTemplate = new go.Link({
+          routing: go.Link.AvoidsNodes,
+          curve: go.Link.JumpOver,
+          relinkableFrom: true,
+          relinkableTo: true,
+          toShortLength: 4,
+          fromShortLength: 2,
+        }).add(
+          new go.Shape({ strokeWidth: 1.5 }),
+          new go.Shape({ toArrow: "Standard", stroke: null })
+        );
+
+        myDiagram.model = savedModel
+          ? go.Model.fromJson(savedModel)
+          : new go.GraphLinksModel({
+              copiesArrays: true,
+              copiesArrayObjects: true,
+              linkFromPortIdProperty: "fromPort",
+              linkToPortIdProperty: "toPort",
+              nodeDataArray: [],
+              linkDataArray: [],
+            });
+
+        showModel();
+      }
+
+      function showModel() {
+        const modelJson = myDiagram.model.toJson();
+        document.getElementById("mySavedModel").innerHTML = modelJson;
+        if (window.Prism) window.Prism.highlightAll();
+        return modelJson;
+      }
+
+      function getNextFigure() {
+        const figure = figures[figureIndex];
+        figureIndex = (figureIndex + 1) % figures.length;
+        return figure;
+      }
+
+      let inicio = null;
+      let fim = null;
+
+      function toggleSelection(item) {
+        const data = item.data;
+        const currentSelectionState = data.selectionState || 0;
+
+        let newColor;
+        let newSelectionState;
+
+        // Primeiro clique fica verde (inicio)
+        if (currentSelectionState === 0) {
+          newColor = "#AAFFAA"; // Verde
+          newSelectionState = 1;
+
+          // Verifica se já há um "inicio" (verde), se não, define esta cidade como "inicio"
+          if (!inicio) {
+            inicio = data.name;
+          } else {
+            // Se já existe "inicio", então define "fim" como a cidade selecionada
+            fim = data.name;
+            newColor = "#FFAAAA"; // Vermelho
+            newSelectionState = 2;
+          }
+        } else if (currentSelectionState === 1) {
+          // Segundo clique, se já está verde, muda para vermelho (fim)
+          newColor = "#FFAAAA"; // Vermelho
+          newSelectionState = 2;
+          fim = data.name; // Atualiza "fim" com o nome da cidade selecionada
+        } else {
+          // Botão direito ou clique para limpar a seleção
+          newColor = "#FFFFFF"; // Sem cor (branco)
+          newSelectionState = 0;
+
+          // Limpa as seleções de inicio e fim
+          if (inicio === data.name) inicio = null;
+          if (fim === data.name) fim = null;
+        }
+
+        // Atualiza o estado e cor da cidade selecionada
+        myDiagram.model.setDataProperty(data, "color", newColor);
+        myDiagram.model.setDataProperty(
+          data,
+          "selectionState",
+          newSelectionState
+        );
+
+        console.log("Inicio:", inicio, "| Fim:", fim); // Para depuração, exibe os valores no console
+      }
+
+      document.getElementById("createTable").addEventListener("click", () => {
+        const tableName = document.getElementById("tableName").value;
+        if (tableName) {
+          myDiagram.model.addNodeData({
+            key: tableName,
+            fields: [],
+            loc: "0 0",
+          });
+          document.getElementById("tableName").value = "";
+        }
+      });
+
+      document.getElementById("addRow").addEventListener("click", () => {
+        const selectedNode = myDiagram.selection.first();
+        const rowName = document.getElementById("rowName").value;
+        if (selectedNode && rowName) {
+          myDiagram.model.addArrayItem(selectedNode.data.fields, {
+            name: rowName,
+            info: "",
+            color: "#FFFFFF",
+            figure: getNextFigure(),
+          });
+          document.getElementById("rowName").value = "";
+        }
+      });
+
+      document
+        .getElementById("createDropdownTable")
+        .addEventListener("click", () => {
+          const locations = [
+            "Antwerp",
+            "Bruges",
+            "C-Mine",
+            "Dinant",
+            "Ghent",
+            "Grand-Place de Bruxelles",
+            "Hasselt",
+            "Leuven",
+            "Mechelen",
+            "Mons",
+            "Montagne de Bueren",
+            "Namur",
+            "Remouchamps",
+            "Waterloo",
+          ];
+
+          const dropdownNode =
+            myDiagram.model.findNodeDataForKey(dropdownTableName);
+
+          if (!dropdownNode) {
+            myDiagram.model.addNodeData({
+              key: dropdownTableName,
+              fields: [],
+              loc: "200 200",
+            });
+          }
+
+          locations.forEach((location) => {
+            myDiagram.model.addArrayItem(dropdownNode.fields, {
+              name: location,
+              info: "",
+              color: "#FFFFFF",
+              selected: false,
+            });
+          });
+        });
+
+      document.getElementById("saveModel").addEventListener("click", showModel);
+
+      window.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
